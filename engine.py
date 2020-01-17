@@ -39,26 +39,17 @@ def main():
         if randint(1, 10) == 1:
             game_map.blocked[x, y] = True
 
-    # Calculate initial dijkstra map
-    game_map.calculate_dijkstra_map(player)
-
-    # visualise dijkstra
-    # for row in game_map.dijkstra:
-    #     print("")
-    #     for value in row:
-    #         print(value, end="\t")
-
     # List to store all the game entities. Populate with player.
     entities = list()
     entities.append(player)
 
     # Add some basic monsters.
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(252, 15, 192)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(252, 15, 192)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(252, 15, 192)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(252, 15, 192)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(252, 15, 192)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(252, 15, 192)))
+    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
 
     # Set the first turn as the player.
     current_turn = Turn.player
@@ -118,21 +109,8 @@ def main():
             for entity in entities:
                 if isinstance(entity, Monster):  # If the entity is a Monster
                     # Can the monster see the player (and vice versa), and is it not alerted to the player?
-                    if (entity.map_x, entity.map_y) in visible_map_chunk and not entity.alerted:
-                        entity.alerted = True  # Monster has seen the player now.
-
-                    # If the monster has seen the player, make chase.
-                    if entity.alerted:
-                        game_map.calculate_dijkstra_map(player, visible_map_chunk)  # Recalculate Dijkstra map.
-
-                        monster_map_x, monster_map_y = entity.get_map_position()
-                        dx, dy = entity.calculate_path(game_map.dijkstra)  # Calculate the best direction to move.
-
-                        destination_x = monster_map_x + dx
-                        destination_y = monster_map_y + dy
-
-                        if not game_map.blocked[destination_x, destination_y]:  # Check if the tiles are walkable.
-                            entity.move(dx, dy)  # Move the monster.
+                    if (entity.map_x, entity.map_y) in visible_map_chunk:
+                        entity.take_turn(game_map, player)
 
             current_turn = Turn.player  # Set to player's turn again.
 

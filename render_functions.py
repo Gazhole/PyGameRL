@@ -57,7 +57,7 @@ def render_top_hud(screen_surface, screen_width, screen_height, view_port_width,
     hud_width = hud_screen_x2 - hud_screen_x1
     hud_height = hud_screen_y2 - hud_screen_y1
 
-    draw_element(screen_surface, hud_screen_x1, hud_screen_y1, hud_width, hud_height, CLR_YELLOW)
+    draw_element(screen_surface, hud_screen_x1, hud_screen_y1, hud_width, hud_height, CLR_BLUE)
 
 
 def render_bottom_hud(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset, view_port_y_offset, player):
@@ -80,7 +80,7 @@ def render_map(screen_surface, view_port_x_offset, view_port_y_offset, game_map,
     for x, y in visible_map_chunk:
 
         floor_colour = CLR_WHITE
-        wall_colour = CLR_RED
+        wall_colour = CLR_BLACK
 
         if game_map.blocked[x, y]:  # If it's a wall, work out its screen position, create filled surface and blit.
             tile_colour = wall_colour

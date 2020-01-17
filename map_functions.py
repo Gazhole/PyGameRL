@@ -8,8 +8,7 @@ class GameMap:
     def __init__(self, width, height, block_borders=True):
         self.width = width  # Map width in tiles.
         self.height = height  # Map height in tiles
-        self.blocked = np.array([[False for y in range(height + 1)] for x in range(width + 1)])  # Non-walkable tiles.
-        self.dijkstra = np.array([[None for y in range(height + 1)] for x in range(width + 1)])  # Pathfinding.
+        self.blocked = np.array([[False for y in range(height + 1)] for x in range(width + 1)], dtype=bool)  # Non-walkable tiles.
 
         if block_borders:
             self.block_borders()  # By default, make an impassable border on the ultimate boundaries of the map.
@@ -20,27 +19,6 @@ class GameMap:
         coordinates = ((x, y) for y in range(self.height) for x in range(self.width))
         for xy in coordinates:
             yield xy
-
-    def calculate_dijkstra_map(self, player, visible_map_chunk=False):
-        self.dijkstra[player.map_x, player.map_y] = 0
-
-        if not visible_map_chunk:
-            coordinates = self.__iter__()
-        else:
-            coordinates = visible_map_chunk
-
-        for x, y in coordinates:
-            if not self.blocked[x, y]:
-                x_distance = x - player.map_x
-                y_distance = y - player.map_y
-
-                if x_distance < 0:
-                    x_distance = x_distance * -1
-
-                if y_distance < 0:
-                    y_distance = y_distance * -1
-
-                self.dijkstra[x, y] = x_distance + y_distance
 
     def block_borders(self):
         for y in range(self.height):
