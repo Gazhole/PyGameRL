@@ -5,7 +5,7 @@ A simple game.
 import pygame
 from input_functions import handle_keys, get_inputs
 from render_functions import render_all
-from classes import Player, Monster
+from classes import Player, Monster, get_blocking_entities
 from map_functions import GameMap, display_to_map, MapChunk, get_visible_map_chunk
 from random import randint
 from game_states import Turn
@@ -44,12 +44,12 @@ def main():
     entities.append(player)
 
     # Add some basic monsters.
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc 1", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc 2", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc 3", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc 4", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc 5", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    entities.append(Monster("Orc 6", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
 
     # Set the first turn as the player.
     current_turn = Turn.player
@@ -68,13 +68,14 @@ def main():
         render_all(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset,
                    view_port_y_offset, game_map, player, entities, visible_map_chunk)
 
+        # Start Player Turn
         if current_turn == Turn.player:
 
             # Get inputs and terminate loop if necessary.
             user_input, running = get_inputs(running)
 
             if not user_input:
-                continue  # Continue with game loop.
+                continue  # If no input continue with game loop.
 
             # Process actions
             else:
@@ -83,7 +84,6 @@ def main():
 
                 # Action categories.
                 move = action.get("move")
-                attack = action.get("attack")  # Not used, just example.
                 quit_game = action.get("quit")
 
                 if quit_game:  # Triggered when ESC key is pressed.
@@ -93,28 +93,38 @@ def main():
                     player_map_x, player_map_y = player.get_map_position()
                     dx, dy = move  # Pull relative values from action.
 
+                    # Calculate potential new coordinates
                     destination_x = player_map_x + dx
                     destination_y = player_map_y + dy
 
                     if not game_map.blocked[destination_x, destination_y]:  # Check if the tiles are walkable.
-                        player.move(dx, dy)  # Move player.
+                        attack_target = get_blocking_entities(entities, destination_x, destination_y)  # Is there a monster at the destination?
 
-                if attack:  # Not used, just example.
-                    pass
+                        # if there is an entity at the location...
+                        if attack_target:
+                            if isinstance(attack_target, Monster):  # ... and it's a monster
+                                player.attack(attack_target)  # Attack it.
+                        else:
+                            player.move(dx, dy)  # If the cell is empty, move player into it.
 
             current_turn = Turn.monster  # Set turn state to monster.
 
+        # Start Monster Turn
         elif current_turn == Turn.monster:
             # Iterate through all entities.
             for entity in entities:
                 if isinstance(entity, Monster):  # If the entity is a Monster
-                    # Can the monster see the player (and vice versa), and is it not alerted to the player?
+                    # Can the monster see the player (and vice versa).
                     if (entity.map_x, entity.map_y) in visible_map_chunk:
-                        entity.take_turn(game_map, player)
+                        if not entity.target:  # If the monster doesn't have a target, set it to the player.
+                            entity.target = player
+
+                        # Process monster turn ai
+                        entity.take_turn(game_map, entities)
 
             current_turn = Turn.player  # Set to player's turn again.
 
-# If the main game loop is broken, quit the game.
+    # If the main game loop is broken, quit the game.
     pygame.quit()
 
 

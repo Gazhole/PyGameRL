@@ -1,6 +1,10 @@
 import numpy as np
 
 
+def display_to_map(screen_x, screen_y):
+    return int(screen_x / 16), int(screen_y / 16)
+
+
 class GameMap:
     """
     Game Map object to store map data, annotations (blocked tiles etc), and pathfinding information.
@@ -82,6 +86,3 @@ def get_visible_map_chunk(player, game_map, view_port_width, view_port_height):
 
     return map_chunk_x1, map_chunk_x2, map_chunk_y1, map_chunk_y2
 
-
-def display_to_map(screen_x, screen_y):
-    return int(screen_x / 16), int(screen_y / 16)
