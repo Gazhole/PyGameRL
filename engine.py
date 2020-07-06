@@ -5,8 +5,8 @@ A simple game.
 import pygame
 from input_functions import handle_keys, get_inputs
 from render_functions import render_all
-from classes import Player, Monster, get_blocking_entities
-from map_functions import GameMap, display_to_map, MapChunk, get_visible_map_chunk
+from classes import Player, Monster, get_blocking_entities, StatBlock
+from map_functions import GameMap, display_to_map, get_visible_map_chunk
 from random import randint
 from game_states import Turn
 
@@ -21,6 +21,13 @@ def main():
     screen_height = 640
     screen_surface = pygame.display.set_mode([screen_width, screen_height])
 
+    # Set up sprites:
+    SPR_TREE = pygame.image.load('Sprites\\tree.png').convert_alpha()
+    SPR_PLAYER = pygame.image.load('Sprites\\player.png').convert_alpha()
+    SPR_ORC = pygame.image.load('Sprites\\orc.png').convert_alpha()
+
+    sprites = {"player": SPR_PLAYER, "tree": SPR_TREE, "orc": SPR_ORC}
+
     # Set up view port constants for the area which will display the game map. HUD dimensions are derived from this.
     view_port_width = 800
     view_port_height = 480
@@ -31,7 +38,8 @@ def main():
     map_width, map_height = display_to_map(screen_width * 2, screen_height * 2)  # Map size in 16px by 16px tiles
 
     # Create player and map objects.
-    player = Player("Player", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(0, 255, 0))
+    player_stats = StatBlock(h=100, m=0, s=10, d=10)
+    player = Player("Player", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(0, 255, 0), sprite=SPR_PLAYER, stats=player_stats)
     game_map = GameMap(map_width, map_height)  # Create a game map.
 
     # Create some random noise in the map.
@@ -44,12 +52,11 @@ def main():
     entities.append(player)
 
     # Add some basic monsters.
-    entities.append(Monster("Orc 1", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc 2", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc 3", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc 4", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc 5", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
-    entities.append(Monster("Orc 6", map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0)))
+    for mon in range(10):
+        name = "Orc " + str(mon + 1)
+        mon_stats = StatBlock(h=10, m=0, s=12, d=8)
+        mon = Monster(name, map_x=randint(1, map_width - 1), map_y=randint(1, map_height - 1), colour=(255, 0, 0), game_map=game_map, sprite=SPR_ORC, stats=mon_stats)
+        entities.append(mon)
 
     # Set the first turn as the player.
     current_turn = Turn.player
@@ -58,15 +65,12 @@ def main():
     running = True
     while running:
 
-        # Get rect boundaries representing the visible part of the map.
-        map_chunk_x1, map_chunk_x2, map_chunk_y1, map_chunk_y2 = get_visible_map_chunk(player, game_map, view_port_width, view_port_height)
-
         # Create a map chunk for iteration based on the rect boundaries.
-        visible_map_chunk = MapChunk(map_chunk_x1, map_chunk_x2, map_chunk_y1, map_chunk_y2)
+        visible_map_chunk = get_visible_map_chunk(player, game_map, view_port_width, view_port_height)
 
-        # Render the various screen elements.
+        # Render the various screen elements. The placement of this determines whether player or enemies movement lag..
         render_all(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset,
-                   view_port_y_offset, game_map, player, entities, visible_map_chunk)
+                   view_port_y_offset, game_map, player, entities, visible_map_chunk, sprites)
 
         # Start Player Turn
         if current_turn == Turn.player:
@@ -110,7 +114,7 @@ def main():
             current_turn = Turn.monster  # Set turn state to monster.
 
         # Start Monster Turn
-        elif current_turn == Turn.monster:
+        if current_turn == Turn.monster:
             # Iterate through all entities.
             for entity in entities:
                 if isinstance(entity, Monster):  # If the entity is a Monster

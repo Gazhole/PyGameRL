@@ -1,4 +1,5 @@
 import numpy as np
+from itertools import product
 
 
 def display_to_map(screen_x, screen_y):
@@ -20,13 +21,11 @@ class GameMap:
     def __iter__(self):
         # This is used to pass a tuple of tuples to represent all coordinates on the map.
         # Used for rendering iteration and pathfinding, and allows the class object to be iterated through.
-        coordinates = ((x, y) for y in range(self.height) for x in range(self.width))
-        for xy in coordinates:
+        for xy in product(range(self.width), range(self.height)):
             yield xy
 
     def block_borders(self):
-        for y in range(self.height):
-            for x in range(self.width):
+        for x, y in product(range(self.width), range(self.height)):
                 if y == 0 or x == 0:
                     self.blocked[x, y] = True
 
@@ -42,8 +41,8 @@ class MapChunk:
         self.y2 = y2
 
     def __iter__(self):
-        coordinates = ((x, y) for y in range(self.y1, self.y2 + 1) for x in range(self.x1, self.x2 + 1))
-        for xy in coordinates:
+        # coordinates = ((x, y) for y in range(self.y1, self.y2 + 1) for x in range(self.x1, self.x2 + 1))
+        for xy in product(range(self.x1, self.x2 + 1), range(self.y1, self.y2 + 1)):
             yield xy
 
 
@@ -84,5 +83,5 @@ def get_visible_map_chunk(player, game_map, view_port_width, view_port_height):
         map_chunk_y2 += -map_chunk_y1
         map_chunk_y1 = 0
 
-    return map_chunk_x1, map_chunk_x2, map_chunk_y1, map_chunk_y2
+    return MapChunk(map_chunk_x1, map_chunk_x2, map_chunk_y1, map_chunk_y2)
 

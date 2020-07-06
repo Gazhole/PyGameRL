@@ -20,7 +20,7 @@ def map_coords_to_pixels(map_x, map_y):
 
 
 def render_all(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset,
-               view_port_y_offset, game_map, player, entities, visible_map_chunk):
+               view_port_y_offset, game_map, player, entities, visible_map_chunk, sprites):
     """
 
     :param screen_surface: obj - the main pygame drawing surface.
@@ -35,17 +35,21 @@ def render_all(screen_surface, screen_width, screen_height, view_port_width, vie
     :param entities: list - tracking all entities in game.
     :return:
     """
+
     # Set the background colour of the window to black.
     screen_surface.fill(CLR_BLACK)
 
     # Invoke individual draw functions.
-    render_map(screen_surface, view_port_x_offset, view_port_y_offset, game_map, visible_map_chunk)
+    render_map(screen_surface, view_port_x_offset, view_port_y_offset, game_map, visible_map_chunk, sprites)
     render_entities(screen_surface, view_port_x_offset, view_port_y_offset, entities, visible_map_chunk)
     render_bottom_hud(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset, view_port_y_offset, player)
     render_top_hud(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset, view_port_y_offset, player)
 
     # Refresh the display.
     pygame.display.flip()
+
+    # Clear the entities
+    clear_entities(screen_surface, view_port_x_offset, view_port_y_offset, entities, visible_map_chunk)
 
 
 def render_top_hud(screen_surface, screen_width, screen_height, view_port_width, view_port_height, view_port_x_offset, view_port_y_offset, player):
@@ -72,24 +76,28 @@ def render_bottom_hud(screen_surface, screen_width, screen_height, view_port_wid
     draw_element(screen_surface, hud_screen_x1, hud_screen_y1, hud_width, hud_height, CLR_BLUE)
 
 
-def render_map(screen_surface, view_port_x_offset, view_port_y_offset, game_map, visible_map_chunk):
+def render_map(screen_surface, view_port_x_offset, view_port_y_offset, game_map, visible_map_chunk, sprites):
     map_chunk_x1 = visible_map_chunk.x1
     map_chunk_y1 = visible_map_chunk.y1
 
+    floor_colour = CLR_BLACK
+    wall_colour = CLR_WHITE
+
+    # Load sprites
+    SPR_TREE = sprites.get("tree")
+
     # Draw walls (blocked tiles).
     for x, y in visible_map_chunk:
-
-        floor_colour = CLR_WHITE
-        wall_colour = CLR_BLACK
-
         if game_map.blocked[x, y]:  # If it's a wall, work out its screen position, create filled surface and blit.
             tile_colour = wall_colour
+            tile_sprite = SPR_TREE
         else:
             tile_colour = floor_colour
+            tile_sprite = None
 
         # Calculate screen position for tile. Draw it!
         tile_screen_x, tile_screen_y = map_coords_to_pixels(x - map_chunk_x1, y - map_chunk_y1)
-        draw_element(screen_surface, tile_screen_x + view_port_x_offset, tile_screen_y + view_port_y_offset, 16, 16, tile_colour)
+        draw_element(screen_surface, tile_screen_x + view_port_x_offset, tile_screen_y + view_port_y_offset, 16, 16, tile_colour, tile_sprite)
 
 
 def render_entities(screen_surface, view_port_x_offset, view_port_y_offset, entities, visible_map_chunk):
@@ -102,7 +110,29 @@ def render_entities(screen_surface, view_port_x_offset, view_port_y_offset, enti
         screen_surface.blit(entity.surf, (entity_screen_x + view_port_x_offset, entity_screen_y + view_port_y_offset))
 
 
-def draw_element(screen_surface, screen_x, screen_y, element_width, element_height, colour):
+def draw_element(screen_surface, screen_x, screen_y, element_width, element_height, colour, sprite=None):
+    element_surface = pygame.Surface((element_width, element_height))
+
+    # If there is a sprite, blit it to the element's surface - if not just fill with block colour.
+    if sprite:
+        element_surface.blit(sprite, (0, 0))
+    else:
+        element_surface.fill(colour)
+
+    screen_surface.blit(element_surface, (screen_x, screen_y))
+
+
+def clear_entities(screen_surface, view_port_x_offset, view_port_y_offset, entities, visible_map_chunk):
+    map_chunk_x1 = visible_map_chunk.x1
+    map_chunk_y1 = visible_map_chunk.y1
+
+    # Iterate through entities and clear it.
+    for entity in entities:
+        entity_screen_x, entity_screen_y = map_coords_to_pixels(entity.map_x - map_chunk_x1, entity.map_y - map_chunk_y1)
+        clear_element(screen_surface, entity_screen_x, entity_screen_y, 16, 16)
+
+
+def clear_element(screen_surface, screen_x, screen_y, element_width, element_height, colour=CLR_BLACK):
     element_surface = pygame.Surface((element_width, element_height))
     element_surface.fill(colour)
     screen_surface.blit(element_surface, (screen_x, screen_y))
